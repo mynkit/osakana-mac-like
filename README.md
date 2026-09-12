@@ -33,6 +33,19 @@
 
 3. **PCを再起動**（Scancode Mapの反映に必要）
 
+### おまけ: 日本語入力もMacに合わせる（z-コマンド）
+
+Macで使える `zl`→「→」のようなz-コマンドはIMEの機能（Google日本語入力）。WindowsのMicrosoft IMEにはないため、Google日本語入力をインストールして既定にする：
+
+```powershell
+winget install --id Google.JapaneseIME --accept-source-agreements --accept-package-agreements
+
+# 既定のIMEにする（GUIDはインストール後 Get-WinUserLanguageList で確認できる）
+Set-WinDefaultInputMethodOverride -InputTip "0411:{D5A86FD5-5308-47EA-AD16-9C4EB160EC3C}{773EB24E-CA1D-4B1B-B420-FA985BB0B80D}"
+```
+
+使えるz-コマンド例: `zh`←　`zj`↓　`zk`↑　`zl`→　`z-`〜　`z.`…　`z,`‥　`z/`・　`z[`『　`z]`』
+
 ### おまけ: PowerShellの行編集をMac/Linux風にする
 
 `powershell-profile.ps1` に PSReadLine のキー設定（Ctrl+U=行頭まで削除、Ctrl+K=行末まで削除）を入れてある。PowerShellプロファイルに反映するには：
