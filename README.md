@@ -20,23 +20,18 @@
 | Cmd+←/→/↑/↓ | 行頭/行末/文頭/文末 |
 | Option+←/→ | 単語単位移動 |
 | Cmd+Delete | 行頭まで削除（エクスプローラーではごみ箱へ） |
-| Cmd+Ctrl+Q | 画面ロック（下記「Win+L の解放」参照） |
+| Cmd+Ctrl+Q | 画面ロック |
 
-## Win+L の解放（Cmd+L をアドレスバー移動にする）
+## 実装方式（Win+L 問題）
 
-Win+L は OS 予約のロックショートカットで AutoHotkey より先に横取りされるため、レジストリでロックを無効化して AHK に渡るようにしている：
+Win+L は OS 予約のロックショートカットで、`#l::` のような通常の AHK リマップでは横取りできない（ロックが先に発動する）。レジストリの `DisableLockWorkstation`（HKCU/HKLM とも）はこの環境（Windows 11 Home 26200）では無視された。
 
-```
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableLockWorkstation /t REG_DWORD /d 1 /f
-```
+そのためこのスクリプトは **Winキー自体を OS から隠す方式**を取っている：
 
-（この環境ではキー作成に管理者権限が必要だった）
+- `*LWin::return` / `*RWin::return` で Win キーを抑止（OS には届かない）
+- 各ショートカットは「Cmd が物理的に押されているか」（`GetKeyState("LWin","P")`）を `#HotIf` 条件にして個別に定義
 
-これで手動ロックが全て無効になるため、代わりに Cmd+Ctrl+Q で「一時的にロックを有効化→ロック→再無効化」する `lock-workstation.ps1` を管理者権限のスケジュールタスク `MacLikeLock` として登録し、AHK から `schtasks /run` で起動している。タスク登録コマンド（要管理者）：
-
-```
-schtasks /create /tn MacLikeLock /tr "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\miyan\github\osakana-mac-like\lock-workstation.ps1" /sc once /sd 2026/01/01 /st 00:00 /rl highest /f
-```
+この方式の副作用として、**Winキー本来のOSショートカットはすべて無効**になる（スタートメニュー、Win+Space、Win+Shift+S スクリーンショット等）。必要なものはスクリプトの Cmd セクションに個別に追加すること。画面ロック機能自体は正常なままなので、Cmd+Ctrl+Q が `LockWorkStation` API を直接呼ぶ。
 
 ### Google Chrome 専用
 
