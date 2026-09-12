@@ -6,9 +6,41 @@
 
 ## セットアップ
 
-1. [AutoHotkey v2](https://www.autohotkey.com/) をインストール
-2. `osakana-mac-like.ahk` をダブルクリックで起動
-3. 自動起動するには、スタートアップフォルダ（`Win+R` → `shell:startup`）にこのスクリプトへのショートカットを置く
+### 事前に必要なもの
+
+- **AutoHotkey v2**（インストール例: `winget install AutoHotkey.AutoHotkey`）
+  - `setup-task.ps1` は実行ファイルが `%LOCALAPPDATA%\Programs\AutoHotkey\v2\AutoHotkey64.exe`（ユーザー単位インストール）にある前提。`C:\Program Files` 側にインストールされた場合はスクリプト冒頭の `$ahkExe` を書き換えること
+- **Git**（このリポジトリを `%USERPROFILE%\github\osakana-mac-like` にcloneする。パスがスクリプト内で決め打ちされているため、別の場所に置く場合は `setup-task.ps1` の `$script` を書き換えること）
+- キーボードをWindowsに **英語配列(101/102キー)** として認識させておく（設定 → 時刻と言語 → 言語と地域 → 日本語のオプション → ハードウェアキーボードレイアウト。要再起動）
+
+### 手順
+
+1. リポジトリをclone:
+
+   ```powershell
+   git clone https://github.com/mynkit/osakana-mac-like.git $env:USERPROFILE\github\osakana-mac-like
+   ```
+
+2. セットアップスクリプトを実行（UACが出たら「はい」）:
+
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File $env:USERPROFILE\github\osakana-mac-like\setup-task.ps1
+   ```
+
+   これで次の2つが登録される:
+   - **Scancode Map**（レジストリ）: Winキーをカーネルレベルで F13/F14 に置換
+   - **ログオンタスク** `osakana-mac-like`: AHKスクリプトを管理者権限で自動起動
+
+3. **PCを再起動**（Scancode Mapの反映に必要）
+
+### アンインストール
+
+```powershell
+# 管理者PowerShellで
+schtasks /delete /tn osakana-mac-like /f
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Keyboard Layout" /v "Scancode Map" /f
+# その後再起動
+```
 
 ## 主な変換
 
