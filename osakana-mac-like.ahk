@@ -25,6 +25,11 @@
 
 ; --- アプリ・ウィンドウ操作 ---
 #q::Send "!{F4}"       ; Cmd+Q → アプリ終了
+#^q:: {                ; Cmd+Ctrl+Q → 画面ロック（Mac風）
+    ; Win+Lロックは無効化済み(DisableLockWorkstation=1)のため、
+    ; 管理者タスク "MacLikeLock" 経由で一時的に有効化してロックする
+    Run 'schtasks /run /tn "MacLikeLock"', , "Hide"
+}
 #w::Send "^w"          ; Cmd+W → タブ/ウィンドウを閉じる
 #m::WinMinimize "A"    ; Cmd+M → ウィンドウ最小化
 #h::WinMinimize "A"    ; Cmd+H → 隠す（Windowsでは最小化で代用）
