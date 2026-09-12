@@ -27,14 +27,53 @@ CmdDown() {
 }
 
 ; --- スタック検知ウォッチドッグ ---
-; UACのセキュアデスクトップ等でCmdのキーアップを取り逃すと、
-; 「Cmd押しっぱなし」誤認で全キーがショートカット化してしまう。
-; Cmdが押されたままキー入力が7秒以上ない状態は誤認とみなし、
-; スクリプトをリロードしてフック状態をリセットする。
+; UACのセキュアデスクトップやBluetooth切断等でCmdのキーアップを
+; 取り逃すと「Cmd押しっぱなし」誤認になり、全キーがショートカット
+; 化して入力不能に見える（Cmd+Tab由来の合成Altが残ると更に悪化）。
+; 「Cmdが15秒以上連続で押されている」ことは通常ないので、検知したら
+; 合成修飾キーを全解放してリロードする。Esc素早く3回でも手動復旧可。
+global g_cmdHeldSince := 0
 SetTimer WatchStuckCmd, 2000
 WatchStuckCmd() {
-    if CmdDown() and A_TimeIdlePhysical > 7000
-        Reload
+    global g_cmdHeldSince
+    if !CmdDown() {
+        g_cmdHeldSince := 0
+        return
+    }
+    if g_cmdHeldSince = 0 {
+        g_cmdHeldSince := A_TickCount
+        return
+    }
+    if A_TickCount - g_cmdHeldSince > 15000
+        RecoverFromStuck("watchdog: Cmd held > 15s")
+}
+
+RecoverFromStuck(reason) {
+    ; 発生記録を残す（原因調査用）
+    try FileAppend A_Now " " reason "`n", A_ScriptDir "\stuck-recovery.log"
+    ; AHKが送った合成修飾キーが残らないよう全解放してからリロード
+    Send "{Blind}{LWin up}{RWin up}{LAlt up}{RAlt up}{LCtrl up}{RCtrl up}{LShift up}{RShift up}"
+    Reload
+}
+
+; ロック画面から復帰したら必ずリセット
+; （ロック中＝セキュアデスクトップのキー操作はAHKから見えず、
+;   キーアップ取り逃しが起こりやすいため）
+DllCall("wtsapi32\WTSRegisterSessionNotification", "ptr", A_ScriptHwnd, "uint", 0)
+OnMessage 0x02B1, WtsSessionChange   ; WM_WTSSESSION_CHANGE
+WtsSessionChange(wParam, lParam, msg, hwnd) {
+    if wParam = 0x8   ; WTS_SESSION_UNLOCK
+        RecoverFromStuck("session unlock")
+}
+
+; Escを1.2秒以内に3回 → 手動で即復旧
+~Esc:: {
+    static times := []
+    times.Push(A_TickCount)
+    while times.Length > 3
+        times.RemoveAt(1)
+    if times.Length = 3 and (times[3] - times[1]) < 1200
+        RecoverFromStuck("manual: triple Esc")
 }
 
 ; ============================================================
@@ -137,14 +176,15 @@ d::Send "^d"           ; ブックマーク
     ; 修飾キーを合成で操作すると押しっぱなし誤認の原因になるため、
     ; 物理的に離されるのを待ってから素のPrintScreenだけを送る
     ; ※ PrintScreenKeyForSnippingEnabled=0 にしてある前提
-    KeyWait "Ctrl"
-    KeyWait "Shift"
-    KeyWait "LWin"
+    KeyWait "Ctrl", "T2"
+    KeyWait "Shift", "T2"
+    KeyWait "LWin", "T2"
     Send "{PrintScreen}"
 }
-^+4::Run "ms-screenclip:"   ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
-                            ; （合成Win+Shift+Sは物理修飾キーと混ざって
-                            ;   Win+S(検索)に化けたため、プロトコル起動にした）
+^+4::Run "explorer.exe ms-screenclip:"   ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
+    ; 合成Win+Shift+Sは物理修飾キーと混ざりWin+S(検索)に化けるため
+    ; プロトコル起動。explorer経由なのはAHKを管理者実行しても
+    ; オーバーレイを通常権限で開くため
 
 ; --- ズーム ---
 =::Send "^{+}"         ; Cmd+= → 拡大
