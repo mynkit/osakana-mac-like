@@ -26,6 +26,17 @@ CmdDown() {
     return GetKeyState("LWin", "P") or GetKeyState("RWin", "P")
 }
 
+; --- スタック検知ウォッチドッグ ---
+; UACのセキュアデスクトップ等でCmdのキーアップを取り逃すと、
+; 「Cmd押しっぱなし」誤認で全キーがショートカット化してしまう。
+; Cmdが押されたままキー入力が7秒以上ない状態は誤認とみなし、
+; スクリプトをリロードしてフック状態をリセットする。
+SetTimer WatchStuckCmd, 2000
+WatchStuckCmd() {
+    if CmdDown() and A_TimeIdlePhysical > 7000
+        Reload
+}
+
 ; ============================================================
 ; Google Chrome 専用（MacのChromeとWindowsのChromeで
 ; ショートカットが異なるものを Mac 側に合わせる）
@@ -123,9 +134,13 @@ d::Send "^d"           ; ブックマーク
 ; --- スクリーンショット（Mac風・クリップボードへコピー） ---
 ; WinキーはOSから隠しているが、Sendによる合成入力は届く
 ^+3:: {                     ; Ctrl+Cmd+Shift+3 → 全画面をクリップボードへ
-    ; 物理的に押されているCtrl/Shiftが混ざらないよう先に論理解放する
+    ; 修飾キーを合成で操作すると押しっぱなし誤認の原因になるため、
+    ; 物理的に離されるのを待ってから素のPrintScreenだけを送る
     ; ※ PrintScreenKeyForSnippingEnabled=0 にしてある前提
-    Send "{Ctrl up}{Shift up}{PrintScreen}"
+    KeyWait "Ctrl"
+    KeyWait "Shift"
+    KeyWait "LWin"
+    Send "{PrintScreen}"
 }
 ^+4::Run "ms-screenclip:"   ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
                             ; （合成Win+Shift+Sは物理修飾キーと混ざって
