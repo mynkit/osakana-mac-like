@@ -33,6 +33,14 @@
 
 3. **PCを再起動**（Scancode Mapの反映に必要）
 
+### おまけ: PowerShellの行編集をMac/Linux風にする
+
+`powershell-profile.ps1` に PSReadLine のキー設定（Ctrl+U=行頭まで削除、Ctrl+K=行末まで削除）を入れてある。PowerShellプロファイルに反映するには：
+
+```powershell
+Get-Content .\powershell-profile.ps1 | Add-Content $PROFILE.CurrentUserAllHosts
+```
+
 ### アンインストール
 
 ```powershell
