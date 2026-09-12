@@ -120,10 +120,10 @@ d::Send "^d"           ; ブックマーク
 8::Send "^8"
 9::Send "^9"
 
-; --- スクリーンショット（Mac風） ---
+; --- スクリーンショット（Mac風・クリップボードへコピー） ---
 ; WinキーはOSから隠しているが、Sendによる合成入力は届く
-+3::Send "#{PrintScreen}"   ; Cmd+Shift+3 → 全画面（ピクチャ\スクリーンショット に保存）
-+4::Send "#+s"              ; Cmd+Shift+4 → 範囲選択（クリップボードへ）
+^+3::Send "{PrintScreen}"   ; Ctrl+Cmd+Shift+3 → 全画面をクリップボードへ
+^+4::Send "#+s"             ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
 
 ; --- ズーム ---
 =::Send "^{+}"         ; Cmd+= → 拡大
