@@ -122,8 +122,14 @@ d::Send "^d"           ; ブックマーク
 
 ; --- スクリーンショット（Mac風・クリップボードへコピー） ---
 ; WinキーはOSから隠しているが、Sendによる合成入力は届く
-^+3::Send "{PrintScreen}"   ; Ctrl+Cmd+Shift+3 → 全画面をクリップボードへ
-^+4::Send "#+s"             ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
+^+3:: {                     ; Ctrl+Cmd+Shift+3 → 全画面をクリップボードへ
+    ; 物理的に押されているCtrl/Shiftが混ざらないよう先に論理解放する
+    Send "{Ctrl up}{Shift up}{PrintScreen}"
+}
+^+4:: {                     ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
+    Send "{Ctrl up}{Shift up}"
+    Send "#+s"
+}
 
 ; --- ズーム ---
 =::Send "^{+}"         ; Cmd+= → 拡大
