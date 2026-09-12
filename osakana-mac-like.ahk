@@ -124,12 +124,12 @@ d::Send "^d"           ; ブックマーク
 ; WinキーはOSから隠しているが、Sendによる合成入力は届く
 ^+3:: {                     ; Ctrl+Cmd+Shift+3 → 全画面をクリップボードへ
     ; 物理的に押されているCtrl/Shiftが混ざらないよう先に論理解放する
+    ; ※ PrintScreenKeyForSnippingEnabled=0 にしてある前提
     Send "{Ctrl up}{Shift up}{PrintScreen}"
 }
-^+4:: {                     ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
-    Send "{Ctrl up}{Shift up}"
-    Send "#+s"
-}
+^+4::Run "ms-screenclip:"   ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
+                            ; （合成Win+Shift+Sは物理修飾キーと混ざって
+                            ;   Win+S(検索)に化けたため、プロトコル起動にした）
 
 ; --- ズーム ---
 =::Send "^{+}"         ; Cmd+= → 拡大
