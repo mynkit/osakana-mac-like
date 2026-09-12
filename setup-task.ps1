@@ -22,6 +22,17 @@ if (-not $isAdmin) {
     exit
 }
 
+# --- Scancode Map: Winキーをカーネルレベルで F13/F14 に置換 ---
+# Win+Lのロック検知はキーボードフックより低いraw inputレイヤーで
+# 行われるため、AHKでWinキーを抑止してもロックだけは素通りする。
+# ドライバー段階でWinキーをF13/F14に変換すれば、OSにとってWinキーは
+# 存在しなくなり、Win+Lは原理的に発生しない（AHKはF13/F14をCmdとして
+# 扱う）。反映には再起動が必要。
+# 内訳: ヘッダ8byte + エントリ数3 + (LWin E0 5B→F13 0x64) + (RWin E0 5C→F14 0x65) + 終端
+$scancodeMap = [byte[]](0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x03,0x00,0x00,0x00, 0x64,0x00,0x5B,0xE0, 0x65,0x00,0x5C,0xE0, 0x00,0x00,0x00,0x00)
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout" -Name "Scancode Map" -Value $scancodeMap -Type Binary
+Write-Host "Scancode Map を登録しました（Win→F13/F14、再起動後に有効）"
+
 # ログオン時・管理者権限・無期限のタスクを登録
 $action = New-ScheduledTaskAction -Execute $ahkExe -Argument "`"$script`""
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
@@ -40,5 +51,7 @@ if (Test-Path $lnk) {
 # 現在の通常権限インスタンスを止めて、管理者権限で起動し直す
 Get-Process AutoHotkey64 -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-ScheduledTask -TaskName $taskName
-Write-Host "AHKを管理者権限で起動しました。このウィンドウは閉じてOKです"
-Start-Sleep -Seconds 5
+Write-Host "AHKを管理者権限で起動しました"
+Write-Host ""
+Write-Host "*** Winキー置換(Scancode Map)の反映にはPCの再起動が必要です ***"
+Start-Sleep -Seconds 10

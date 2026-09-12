@@ -18,12 +18,20 @@ InstallKeybdHook
 ; ============================================================
 
 ; WinキーをOSから隠す
+; ※ Win+Lのロック検知はフックより低いraw inputレイヤーで行われる
+;   ため、この抑止だけではロックを防げない。setup-task.ps1 の
+;   Scancode Map（Win→F13/F14のカーネルレベル置換、要再起動）と
+;   セットで使う。置換後はCmdはF13/F14として届く。
 *LWin::return
 *RWin::return
+*F13::return
+*F14::return
 
 ; Cmd(Win)が物理的に押されているか
+; （Scancode Map適用前はLWin/RWin、適用後はF13/F14として届く）
 CmdDown() {
-    return GetKeyState("LWin", "P") or GetKeyState("RWin", "P")
+    return GetKeyState("F13", "P") or GetKeyState("F14", "P")
+        or GetKeyState("LWin", "P") or GetKeyState("RWin", "P")
 }
 
 ; --- スタック検知ウォッチドッグ ---
@@ -52,7 +60,7 @@ RecoverFromStuck(reason) {
     ; 発生記録を残す（原因調査用）
     try FileAppend A_Now " " reason "`n", A_ScriptDir "\stuck-recovery.log"
     ; AHKが送った合成修飾キーが残らないよう全解放してからリロード
-    Send "{Blind}{LWin up}{RWin up}{LAlt up}{RAlt up}{LCtrl up}{RCtrl up}{LShift up}{RShift up}"
+    Send "{Blind}{LWin up}{RWin up}{F13 up}{F14 up}{LAlt up}{RAlt up}{LCtrl up}{RCtrl up}{LShift up}{RShift up}"
     Reload
 }
 
@@ -179,6 +187,7 @@ d::Send "^d"           ; ブックマーク
     KeyWait "Ctrl", "T2"
     KeyWait "Shift", "T2"
     KeyWait "LWin", "T2"
+    KeyWait "F13", "T2"
     Send "{PrintScreen}"
 }
 ^+4::Run "explorer.exe ms-screenclip:"   ; Ctrl+Cmd+Shift+4 → 範囲選択をクリップボードへ
