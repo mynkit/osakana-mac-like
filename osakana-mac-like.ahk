@@ -236,7 +236,7 @@ BackSpace::Send "+{Home}{BackSpace}"
 #HotIf
 
 ReleaseAltWhenCmdUp() {
-    if GetKeyState("LWin", "P") || GetKeyState("RWin", "P")
+    if CmdDown()
         return
     Send "{Alt up}"
     SetTimer , 0
